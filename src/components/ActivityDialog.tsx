@@ -32,6 +32,7 @@ export const ActivityDialog = ({ onSave }: ActivityDialogProps) => {
     companyName: '',
     jobTitle: '',
     activityType: 'application' as ActivityType,
+    jobDescriptionUrl: '',
     contactPerson: '',
     contactMethod: '',
     notes: '',
@@ -45,6 +46,7 @@ export const ActivityDialog = ({ onSave }: ActivityDialogProps) => {
       companyName: '',
       jobTitle: '',
       activityType: 'application',
+      jobDescriptionUrl: '',
       contactPerson: '',
       contactMethod: '',
       notes: '',
@@ -115,6 +117,17 @@ export const ActivityDialog = ({ onSave }: ActivityDialogProps) => {
               value={formData.jobTitle}
               onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
               required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="jobDescriptionUrl">Job Description Link</Label>
+            <Input
+              id="jobDescriptionUrl"
+              type="url"
+              placeholder="https://..."
+              value={formData.jobDescriptionUrl}
+              onChange={(e) => setFormData({ ...formData, jobDescriptionUrl: e.target.value })}
             />
           </div>
 
