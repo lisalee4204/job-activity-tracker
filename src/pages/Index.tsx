@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ActivityDialog } from '@/components/ActivityDialog';
+import { EmailImportDialog } from '@/components/EmailImportDialog';
 import { WeeklySummaryCard } from '@/components/WeeklySummaryCard';
 import { ActivityTable } from '@/components/ActivityTable';
 import { CategoryChart } from '@/components/CategoryChart';
@@ -58,7 +59,10 @@ const Index = () => {
                 </p>
               </div>
             </div>
-            <ActivityDialog onSave={handleAddActivity} />
+            <div className="flex gap-2">
+              <EmailImportDialog onImport={handleAddActivity} />
+              <ActivityDialog onSave={handleAddActivity} />
+            </div>
           </div>
         </div>
       </header>
