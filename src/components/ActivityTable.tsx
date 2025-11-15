@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { JobSearchActivity } from '@/types/jobSearch';
 import { format, parseISO } from 'date-fns';
-import { Trash2 } from 'lucide-react';
+import { Trash2, ExternalLink } from 'lucide-react';
 
 interface ActivityTableProps {
   activities: JobSearchActivity[];
@@ -58,7 +58,22 @@ export const ActivityTable = ({ activities, onDelete }: ActivityTableProps) => {
                 {format(parseISO(activity.date), 'MMM d, yyyy')}
               </TableCell>
               <TableCell>{activity.companyName}</TableCell>
-              <TableCell>{activity.jobTitle}</TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <span>{activity.jobTitle}</span>
+                  {activity.jobDescriptionUrl && (
+                    <a
+                      href={activity.jobDescriptionUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:text-primary/80"
+                      title="View job description"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+                </div>
+              </TableCell>
               <TableCell>
                 <Badge variant="secondary">
                   {activityTypeLabels[activity.activityType]}

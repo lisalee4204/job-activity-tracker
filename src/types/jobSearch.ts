@@ -15,6 +15,7 @@ export interface JobSearchActivity {
   companyName: string;
   jobTitle: string;
   activityType: ActivityType;
+  jobDescriptionUrl?: string;
   contactPerson?: string;
   contactMethod?: string;
   notes?: string;
