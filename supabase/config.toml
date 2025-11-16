@@ -1,1 +1,13 @@
 project_id = "hgyrzzeidriveaonojwq"
+
+[functions.parse-email]
+verify_jwt = true
+
+[functions.gmail-auth]
+verify_jwt = false
+
+[functions.fetch-gmail-emails]
+verify_jwt = true
+
+[functions.gmail-oauth-config]
+verify_jwt = false
