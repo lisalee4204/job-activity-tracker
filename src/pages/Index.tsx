@@ -178,22 +178,31 @@ const Index = () => {
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
-            <ExportMenu activities={activities} weeklyGoal={weeklyGoal} />
-            <GmailConnectButton />
-            <GmailImportDialog onImportComplete={loadActivitiesFromDb} />
-            <EmailImportDialog onImport={handleAddActivity} />
+            <div className="flex flex-wrap gap-2 items-center">
+              {/* Primary Action */}
               <ActivityDialog onSave={handleAddActivity} />
-              <SettingsDialog weeklyGoal={weeklyGoal} onGoalChange={setWeeklyGoal} />
-              <Button 
-                variant="secondary" 
-                size="sm"
-                onClick={handleLogout}
-                className="gap-2"
-              >
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
+              
+              {/* Import Options */}
+              <div className="flex gap-2 items-center">
+                <GmailConnectButton />
+                <GmailImportDialog onImportComplete={loadActivitiesFromDb} />
+                <EmailImportDialog onImport={handleAddActivity} />
+              </div>
+              
+              {/* Secondary Actions */}
+              <div className="flex gap-2 items-center">
+                <ExportMenu activities={activities} weeklyGoal={weeklyGoal} />
+                <SettingsDialog weeklyGoal={weeklyGoal} onGoalChange={setWeeklyGoal} />
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={handleLogout}
+                  className="gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </Button>
+              </div>
             </div>
           </div>
         </div>
