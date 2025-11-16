@@ -14,7 +14,7 @@ export const formatWeekRange = (weekStart: Date): string => {
   return `${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d, yyyy')}`;
 };
 
-export const getWeeklySummaries = (activities: JobSearchActivity[]): WeeklySummary[] => {
+export const getWeeklySummaries = (activities: JobSearchActivity[], weeklyGoal: number = 3): WeeklySummary[] => {
   const weekMap = new Map<string, WeeklySummary>();
   
   activities.forEach(activity => {
@@ -46,7 +46,7 @@ export const getWeeklySummaries = (activities: JobSearchActivity[]): WeeklySumma
     const summary = weekMap.get(weekKey)!;
     summary.totalActivities++;
     summary.activitiesByType[activity.activityType]++;
-    summary.meetsRequirement = summary.totalActivities >= 5;
+    summary.meetsRequirement = summary.totalActivities >= weeklyGoal;
   });
   
   return Array.from(weekMap.values()).sort((a, b) => 
