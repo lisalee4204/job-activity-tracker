@@ -34,8 +34,19 @@ Deno.serve(async (req) => {
 
     console.log('Fetching emails from Gmail...');
 
-    // Fetch recent emails (last 7 days)
-    const query = encodeURIComponent('newer_than:7d');
+    // Fetch recent emails with job application keywords (last 7 days)
+    const keywords = [
+      'thank you for applying',
+      'thanks for applying',
+      'application received',
+      'received your application',
+      'we received your application',
+      'confirm your application',
+      'application confirmation'
+    ];
+    
+    const keywordQuery = keywords.map(k => `"${k}"`).join(' OR ');
+    const query = encodeURIComponent(`newer_than:7d (${keywordQuery})`);
     const messagesResponse = await fetch(
       `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${query}&maxResults=50`,
       {
