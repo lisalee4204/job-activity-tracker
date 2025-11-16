@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      job_search_activities: {
+        Row: {
+          activity_type: string
+          company_name: string
+          contact_method: string | null
+          contact_person: string | null
+          created_at: string
+          date: string
+          id: string
+          job_description_url: string | null
+          job_title: string
+          notes: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          company_name: string
+          contact_method?: string | null
+          contact_person?: string | null
+          created_at?: string
+          date: string
+          id?: string
+          job_description_url?: string | null
+          job_title: string
+          notes?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          company_name?: string
+          contact_method?: string | null
+          contact_person?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          job_description_url?: string | null
+          job_title?: string
+          notes?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

@@ -9,7 +9,7 @@ import { ActivityTable } from '@/components/ActivityTable';
 import { CategoryChart } from '@/components/CategoryChart';
 import { JobTitleChart } from '@/components/JobTitleChart';
 import { JobSearchActivity } from '@/types/jobSearch';
-import { loadActivities, addActivity, deleteActivity } from '@/lib/jobSearchStorage';
+import { GmailConnectButton } from '@/components/GmailConnectButton';
 import {
   getWeeklySummaries,
   getActivitiesByCategory,
@@ -22,27 +22,97 @@ import { supabase } from '@/integrations/supabase/client';
 const Index = () => {
   const navigate = useNavigate();
   const [activities, setActivities] = useState<JobSearchActivity[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setActivities(loadActivities());
+    loadActivitiesFromDb();
   }, []);
 
-  const handleAddActivity = (activityData: Omit<JobSearchActivity, 'id' | 'createdAt'>) => {
-    const newActivity: JobSearchActivity = {
-      ...activityData,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-    };
-    
-    const updatedActivities = addActivity(newActivity);
-    setActivities(updatedActivities);
-    toast.success('Activity added successfully');
+  const loadActivitiesFromDb = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('job_search_activities')
+        .select('*')
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedActivities: JobSearchActivity[] = (data || []).map(activity => ({
+        id: activity.id,
+        date: activity.date,
+        companyName: activity.company_name,
+        jobTitle: activity.job_title,
+        activityType: activity.activity_type as JobSearchActivity['activityType'],
+        jobDescriptionUrl: activity.job_description_url || undefined,
+        contactPerson: activity.contact_person || undefined,
+        contactMethod: activity.contact_method || undefined,
+        notes: activity.notes || undefined,
+        status: activity.status as JobSearchActivity['status'],
+        createdAt: activity.created_at,
+      }));
+
+      setActivities(formattedActivities);
+    } catch (error) {
+      console.error('Error loading activities:', error);
+      toast.error('Failed to load activities');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteActivity = (id: string) => {
-    const updatedActivities = deleteActivity(id);
-    setActivities(updatedActivities);
-    toast.success('Activity deleted');
+  const handleAddActivity = async (activityData: Omit<JobSearchActivity, 'id' | 'createdAt'>) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('You must be logged in');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('job_search_activities')
+        .insert({
+          user_id: user.id,
+          date: activityData.date,
+          company_name: activityData.companyName,
+          job_title: activityData.jobTitle,
+          activity_type: activityData.activityType,
+          job_description_url: activityData.jobDescriptionUrl,
+          contact_person: activityData.contactPerson,
+          contact_method: activityData.contactMethod,
+          notes: activityData.notes,
+          status: activityData.status,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await loadActivitiesFromDb();
+      toast.success('Activity added successfully');
+    } catch (error) {
+      console.error('Error adding activity:', error);
+      toast.error('Failed to add activity');
+    }
+  };
+
+  const handleDeleteActivity = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('job_search_activities')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await loadActivitiesFromDb();
+      toast.success('Activity deleted');
+    } catch (error) {
+      console.error('Error deleting activity:', error);
+      toast.error('Failed to delete activity');
+    }
   };
 
   const handleLogout = async () => {
@@ -73,6 +143,7 @@ const Index = () => {
               </div>
             </div>
             <div className="flex gap-2">
+              <GmailConnectButton />
               <EmailImportDialog onImport={handleAddActivity} />
               <ActivityDialog onSave={handleAddActivity} />
               <Button 
@@ -90,6 +161,12 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {loading ? (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <>
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
@@ -173,6 +250,8 @@ const Index = () => {
             </CardContent>
           </Card>
         </section>
+          </>
+        )}
       </main>
     </div>
   );
