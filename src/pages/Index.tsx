@@ -168,7 +168,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <header className="bg-primary text-primary-foreground shadow-md">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-4">
             {/* Title Section */}
             <div className="flex items-center gap-3">
               <Briefcase className="h-8 w-8" />
@@ -180,28 +180,38 @@ const Index = () => {
               </div>
             </div>
             
-            {/* Actions Section */}
-            <div className="flex flex-wrap gap-2 items-center justify-start lg:justify-end">
-              {/* Primary Action */}
-              <ActivityDialog onSave={handleAddActivity} />
+            {/* Actions Section - Mobile Optimized */}
+            <div className="flex flex-col gap-2 lg:flex-row lg:flex-wrap lg:justify-end">
+              {/* Primary Action - Full width on mobile */}
+              <div className="lg:w-auto">
+                <ActivityDialog onSave={handleAddActivity} />
+              </div>
               
-              {/* Import Options */}
-              <GmailConnectButton />
-              <GmailImportDialog onImportComplete={loadActivitiesFromDb} />
-              <EmailImportDialog onImport={handleAddActivity} />
+              {/* Import Options - Grid on mobile, flex on desktop */}
+              <div className="grid grid-cols-2 gap-2 lg:flex lg:gap-2">
+                <GmailConnectButton />
+                <GmailImportDialog onImportComplete={loadActivitiesFromDb} />
+              </div>
               
-              {/* Secondary Actions */}
-              <ExportMenu activities={activities} weeklyGoal={weeklyGoal} />
-              <SettingsDialog weeklyGoal={weeklyGoal} onGoalChange={setWeeklyGoal} />
-              <Button 
-                variant="secondary" 
-                size="sm"
-                onClick={handleLogout}
-                className="gap-2"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Logout</span>
-              </Button>
+              {/* More Actions - Grid on mobile, flex on desktop */}
+              <div className="grid grid-cols-2 gap-2 lg:flex lg:gap-2">
+                <EmailImportDialog onImport={handleAddActivity} />
+                <ExportMenu activities={activities} weeklyGoal={weeklyGoal} />
+              </div>
+              
+              {/* Settings & Logout - Grid on mobile, flex on desktop */}
+              <div className="grid grid-cols-2 gap-2 lg:flex lg:gap-2">
+                <SettingsDialog weeklyGoal={weeklyGoal} onGoalChange={setWeeklyGoal} />
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={handleLogout}
+                  className="gap-2 w-full lg:w-auto"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
