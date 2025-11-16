@@ -156,8 +156,8 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 overflow-y-auto">
+      <div className="w-full max-w-md space-y-6 my-8">
         <div className="text-center">
           <div className="flex justify-center mb-4">
             <div className="p-3 bg-primary/10 rounded-full">
@@ -181,7 +181,7 @@ export default function Auth() {
               </TabsList>
               
               <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-4">
+                <form onSubmit={handleSignIn} className="space-y-3">
                   <div className="space-y-2">
                     <Label htmlFor="signin-email">Email</Label>
                     <Input
@@ -228,7 +228,7 @@ export default function Auth() {
                   </Button>
                 </form>
                 
-                <div className="relative my-6">
+                <div className="relative my-4">
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
                   </div>
@@ -252,7 +252,7 @@ export default function Auth() {
               </TabsContent>
               
               <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-4">
+                <form onSubmit={handleSignUp} className="space-y-3">
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
                     <Input
@@ -299,7 +299,7 @@ export default function Auth() {
                   </Button>
                 </form>
                 
-                <div className="relative my-6">
+                <div className="relative my-4">
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
                   </div>
