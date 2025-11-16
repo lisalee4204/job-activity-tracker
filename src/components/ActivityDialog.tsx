@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
 import { Plus } from 'lucide-react';
 import { JobSearchActivity, ActivityType } from '@/types/jobSearch';
 import { format } from 'date-fns';
@@ -36,6 +37,7 @@ export const ActivityDialog = ({ onSave }: ActivityDialogProps) => {
     contactPerson: '',
     contactMethod: '',
     notes: '',
+    status: 'application' as 'application' | 'assessment' | 'hr_screen' | 'hiring_manager' | 'final_round' | 'offer' | 'rejected' | undefined,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -50,6 +52,7 @@ export const ActivityDialog = ({ onSave }: ActivityDialogProps) => {
       contactPerson: '',
       contactMethod: '',
       notes: '',
+      status: 'application',
     });
     setOpen(false);
   };
@@ -149,6 +152,34 @@ export const ActivityDialog = ({ onSave }: ActivityDialogProps) => {
                 onChange={(e) => setFormData({ ...formData, contactMethod: e.target.value })}
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
+              <SelectTrigger id="status">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="application">Application Submitted</SelectItem>
+                <SelectItem value="assessment">Code Assessment</SelectItem>
+                <SelectItem value="hr_screen">HR Screen</SelectItem>
+                <SelectItem value="hiring_manager">Hiring Manager Interview</SelectItem>
+                <SelectItem value="final_round">Final Round</SelectItem>
+                <SelectItem value="offer">Offer Received</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Separator />
+          
+          <div className="bg-muted/50 p-3 rounded-lg">
+            <p className="text-sm text-muted-foreground">
+              <strong>Tip:</strong> Track each interaction as a separate activity. 
+              Applied on Monday? Add an "Application" activity. 
+              Interview on Friday? Add an "Interview" activity for the same job.
+            </p>
           </div>
 
           <div className="space-y-2">

@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { accessToken } = await req.json();
+    const { accessToken, daysAgo = 7 } = await req.json();
 
     if (!accessToken) {
       return new Response(
@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     ];
     
     const keywordQuery = keywords.map(k => `"${k}"`).join(' OR ');
-    const query = encodeURIComponent(`newer_than:7d (${keywordQuery})`);
+    const query = encodeURIComponent(`newer_than:${daysAgo}d (${keywordQuery})`);
     const messagesResponse = await fetch(
       `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${query}&maxResults=50`,
       {
