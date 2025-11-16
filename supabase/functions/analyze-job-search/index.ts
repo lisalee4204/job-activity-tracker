@@ -20,6 +20,15 @@ serve(async (req) => {
       );
     }
 
+    // Security: Limit activities array size to prevent DoS and credit exhaustion
+    const MAX_ACTIVITIES = 1000;
+    if (activities.length > MAX_ACTIVITIES) {
+      return new Response(
+        JSON.stringify({ error: `Too many activities. Maximum is ${MAX_ACTIVITIES}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       console.error('LOVABLE_API_KEY not configured');

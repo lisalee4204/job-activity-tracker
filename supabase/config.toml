@@ -4,7 +4,7 @@ project_id = "hgyrzzeidriveaonojwq"
 verify_jwt = true
 
 [functions.gmail-auth]
-verify_jwt = false
+verify_jwt = true
 
 [functions.fetch-gmail-emails]
 verify_jwt = true
