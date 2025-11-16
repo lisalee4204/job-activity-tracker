@@ -47,14 +47,14 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
+      <header className="bg-primary text-primary-foreground shadow-md">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
-              <Briefcase className="h-8 w-8 text-primary" />
+              <Briefcase className="h-8 w-8" />
               <div>
                 <h1 className="text-2xl font-bold">Job Search Tracker</h1>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm opacity-90">
                   Texas Unemployment Claims Documentation
                 </p>
               </div>
