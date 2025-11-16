@@ -18,6 +18,15 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Security: Limit email content size to 50KB to prevent DoS and credit exhaustion
+    const MAX_EMAIL_SIZE = 50 * 1024; // 50KB
+    if (emailContent.length > MAX_EMAIL_SIZE) {
+      return new Response(
+        JSON.stringify({ error: `Email content too large. Maximum size is ${MAX_EMAIL_SIZE / 1024}KB` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY not configured');
