@@ -46,7 +46,7 @@ export const getWeeklySummaries = (activities: JobSearchActivity[]): WeeklySumma
     const summary = weekMap.get(weekKey)!;
     summary.totalActivities++;
     summary.activitiesByType[activity.activityType]++;
-    summary.meetsRequirement = summary.totalActivities >= 3;
+    summary.meetsRequirement = summary.totalActivities >= 5;
   });
   
   return Array.from(weekMap.values()).sort((a, b) => 
