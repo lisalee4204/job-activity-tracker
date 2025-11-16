@@ -167,42 +167,41 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-primary text-primary-foreground shadow-md">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            {/* Title Section */}
             <div className="flex items-center gap-3">
               <Briefcase className="h-8 w-8" />
               <div>
-                <h1 className="text-2xl font-bold">Job Search Tracker</h1>
-                <p className="text-sm opacity-90">
+                <h1 className="text-xl lg:text-2xl font-bold">Job Search Tracker</h1>
+                <p className="text-xs lg:text-sm opacity-90">
                   Track your job search activities and stay organized
                 </p>
               </div>
             </div>
-            <div className="flex flex-wrap gap-2 items-center">
+            
+            {/* Actions Section */}
+            <div className="flex flex-wrap gap-2 items-center justify-start lg:justify-end">
               {/* Primary Action */}
               <ActivityDialog onSave={handleAddActivity} />
               
               {/* Import Options */}
-              <div className="flex gap-2 items-center">
-                <GmailConnectButton />
-                <GmailImportDialog onImportComplete={loadActivitiesFromDb} />
-                <EmailImportDialog onImport={handleAddActivity} />
-              </div>
+              <GmailConnectButton />
+              <GmailImportDialog onImportComplete={loadActivitiesFromDb} />
+              <EmailImportDialog onImport={handleAddActivity} />
               
               {/* Secondary Actions */}
-              <div className="flex gap-2 items-center">
-                <ExportMenu activities={activities} weeklyGoal={weeklyGoal} />
-                <SettingsDialog weeklyGoal={weeklyGoal} onGoalChange={setWeeklyGoal} />
-                <Button 
-                  variant="secondary" 
-                  size="sm"
-                  onClick={handleLogout}
-                  className="gap-2"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Logout
-                </Button>
-              </div>
+              <ExportMenu activities={activities} weeklyGoal={weeklyGoal} />
+              <SettingsDialog weeklyGoal={weeklyGoal} onGoalChange={setWeeklyGoal} />
+              <Button 
+                variant="secondary" 
+                size="sm"
+                onClick={handleLogout}
+                className="gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Logout</span>
+              </Button>
             </div>
           </div>
         </div>
