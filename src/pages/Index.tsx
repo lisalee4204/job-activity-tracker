@@ -7,6 +7,7 @@ import { EmailImportDialog } from '@/components/EmailImportDialog';
 import { GmailImportDialog } from '@/components/GmailImportDialog';
 import { WeeklySummaryCard } from '@/components/WeeklySummaryCard';
 import { ActivityTable } from '@/components/ActivityTable';
+import { SettingsDialog } from '@/components/SettingsDialog';
 import { CategoryChart } from '@/components/CategoryChart';
 import { JobTitleChart } from '@/components/JobTitleChart';
 import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
@@ -25,10 +26,41 @@ const Index = () => {
   const navigate = useNavigate();
   const [activities, setActivities] = useState<JobSearchActivity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [weeklyGoal, setWeeklyGoal] = useState(3);
 
   useEffect(() => {
     loadActivitiesFromDb();
+    loadUserPreferences();
   }, []);
+
+  const loadUserPreferences = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('weekly_goal')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading preferences:', error);
+        return;
+      }
+
+      if (data) {
+        setWeeklyGoal(data.weekly_goal);
+      } else {
+        // Create default preferences
+        await supabase
+          .from('user_preferences')
+          .insert({ user_id: user.id, weekly_goal: 3 });
+      }
+    } catch (error) {
+      console.error('Error loading preferences:', error);
+    }
+  };
 
   const loadActivitiesFromDb = async () => {
     try {
@@ -126,7 +158,7 @@ const Index = () => {
     }
   };
 
-  const weeklySummaries = getWeeklySummaries(activities);
+  const weeklySummaries = getWeeklySummaries(activities, weeklyGoal);
   const categoryCounts = getActivitiesByCategory(activities);
   const jobTitleCounts = getJobTitleCounts(activities);
 
@@ -140,7 +172,7 @@ const Index = () => {
               <div>
                 <h1 className="text-2xl font-bold">Job Search Tracker</h1>
                 <p className="text-sm opacity-90">
-                  Texas Unemployment Claims Documentation
+                  Track your job search activities and stay organized
                 </p>
               </div>
             </div>
@@ -149,6 +181,7 @@ const Index = () => {
             <GmailImportDialog onImportComplete={loadActivitiesFromDb} />
             <EmailImportDialog onImport={handleAddActivity} />
               <ActivityDialog onSave={handleAddActivity} />
+              <SettingsDialog weeklyGoal={weeklyGoal} onGoalChange={setWeeklyGoal} />
               <Button 
                 variant="secondary" 
                 size="sm"
@@ -196,8 +229,8 @@ const Index = () => {
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 {weeklySummaries[0]?.meetsRequirement 
-                  ? 'Meets Texas requirements' 
-                  : 'Need 5+ activities'}
+                  ? 'Meets weekly goal' 
+                  : `Need ${weeklyGoal}+ activities`}
               </p>
             </CardContent>
           </Card>
@@ -223,7 +256,7 @@ const Index = () => {
           <h2 className="text-xl font-semibold mb-4">Weekly Summary</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {weeklySummaries.slice(0, 6).map((summary) => (
-              <WeeklySummaryCard key={summary.weekStart} summary={summary} />
+              <WeeklySummaryCard key={summary.weekStart} summary={summary} weeklyGoal={weeklyGoal} />
             ))}
           </div>
           {weeklySummaries.length === 0 && (

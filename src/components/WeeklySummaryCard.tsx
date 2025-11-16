@@ -7,9 +7,10 @@ import { CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface WeeklySummaryCardProps {
   summary: WeeklySummary;
+  weeklyGoal: number;
 }
 
-export const WeeklySummaryCard = ({ summary }: WeeklySummaryCardProps) => {
+export const WeeklySummaryCard = ({ summary, weeklyGoal }: WeeklySummaryCardProps) => {
   const weekStart = parseISO(summary.weekStart);
   const weekRange = formatWeekRange(weekStart);
   
@@ -38,7 +39,7 @@ export const WeeklySummaryCard = ({ summary }: WeeklySummaryCardProps) => {
             <span className="text-2xl font-bold">{summary.totalActivities}</span>
           </div>
           <div className="text-xs text-muted-foreground">
-            Texas requires 3+ work search activities per week
+            Weekly goal: {weeklyGoal}+ work search activities
           </div>
         </div>
       </CardContent>
