@@ -11,6 +11,8 @@ import { SettingsDialog } from '@/components/SettingsDialog';
 import { CategoryChart } from '@/components/CategoryChart';
 import { JobTitleChart } from '@/components/JobTitleChart';
 import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
+import { InsightsCard } from '@/components/InsightsCard';
+import { ExportMenu } from '@/components/ExportMenu';
 import { JobSearchActivity } from '@/types/jobSearch';
 import { GmailConnectButton } from '@/components/GmailConnectButton';
 import {
@@ -177,6 +179,7 @@ const Index = () => {
               </div>
             </div>
             <div className="flex gap-2">
+            <ExportMenu activities={activities} weeklyGoal={weeklyGoal} />
             <GmailConnectButton />
             <GmailImportDialog onImportComplete={loadActivitiesFromDb} />
             <EmailImportDialog onImport={handleAddActivity} />
@@ -277,7 +280,10 @@ const Index = () => {
         {/* Analytics Dashboard */}
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Analytics & Insights</h2>
-          <AnalyticsDashboard activities={activities} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <AnalyticsDashboard activities={activities} />
+            <InsightsCard activities={activities} />
+          </div>
         </section>
 
         {/* Activities Table */}
