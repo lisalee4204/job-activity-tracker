@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { ActivityDialog } from '@/components/ActivityDialog';
 import { EmailImportDialog } from '@/components/EmailImportDialog';
 import { WeeklySummaryCard } from '@/components/WeeklySummaryCard';
@@ -14,9 +16,11 @@ import {
   getJobTitleCounts,
 } from '@/lib/weekUtils';
 import { toast } from 'sonner';
-import { Briefcase, FileText, TrendingUp } from 'lucide-react';
+import { Briefcase, FileText, TrendingUp, LogOut } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
+  const navigate = useNavigate();
   const [activities, setActivities] = useState<JobSearchActivity[]>([]);
 
   useEffect(() => {
@@ -41,6 +45,15 @@ const Index = () => {
     toast.success('Activity deleted');
   };
 
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error('Failed to log out');
+    } else {
+      navigate('/auth');
+    }
+  };
+
   const weeklySummaries = getWeeklySummaries(activities);
   const categoryCounts = getActivitiesByCategory(activities);
   const jobTitleCounts = getJobTitleCounts(activities);
@@ -62,6 +75,15 @@ const Index = () => {
             <div className="flex gap-2">
               <EmailImportDialog onImport={handleAddActivity} />
               <ActivityDialog onSave={handleAddActivity} />
+              <Button 
+                variant="secondary" 
+                size="sm"
+                onClick={handleLogout}
+                className="gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
             </div>
           </div>
         </div>
