@@ -4,10 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ActivityDialog } from '@/components/ActivityDialog';
 import { EmailImportDialog } from '@/components/EmailImportDialog';
+import { GmailImportDialog } from '@/components/GmailImportDialog';
 import { WeeklySummaryCard } from '@/components/WeeklySummaryCard';
 import { ActivityTable } from '@/components/ActivityTable';
 import { CategoryChart } from '@/components/CategoryChart';
 import { JobTitleChart } from '@/components/JobTitleChart';
+import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
 import { JobSearchActivity } from '@/types/jobSearch';
 import { GmailConnectButton } from '@/components/GmailConnectButton';
 import {
@@ -143,8 +145,9 @@ const Index = () => {
               </div>
             </div>
             <div className="flex gap-2">
-              <GmailConnectButton />
-              <EmailImportDialog onImport={handleAddActivity} />
+            <GmailConnectButton />
+            <GmailImportDialog onImportComplete={loadActivitiesFromDb} />
+            <EmailImportDialog onImport={handleAddActivity} />
               <ActivityDialog onSave={handleAddActivity} />
               <Button 
                 variant="secondary" 
@@ -237,6 +240,12 @@ const Index = () => {
           <CategoryChart data={categoryCounts} />
           <JobTitleChart data={jobTitleCounts} />
         </div>
+
+        {/* Analytics Dashboard */}
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold mb-4">Analytics & Insights</h2>
+          <AnalyticsDashboard activities={activities} />
+        </section>
 
         {/* Activities Table */}
         <section>

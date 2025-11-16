@@ -19,7 +19,7 @@ export interface JobSearchActivity {
   contactPerson?: string;
   contactMethod?: string;
   notes?: string;
-  status?: 'pending' | 'followed_up' | 'rejected' | 'interview_scheduled' | 'offer';
+  status?: 'application' | 'assessment' | 'hr_screen' | 'hiring_manager' | 'final_round' | 'offer' | 'rejected';
   createdAt: string;
 }
 
