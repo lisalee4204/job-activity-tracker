@@ -95,7 +95,7 @@ const Index = () => {
               <p className="text-xs text-muted-foreground mt-1">
                 {weeklySummaries[0]?.meetsRequirement 
                   ? 'Meets Texas requirements' 
-                  : 'Need 3+ activities'}
+                  : 'Need 5+ activities'}
               </p>
             </CardContent>
           </Card>
