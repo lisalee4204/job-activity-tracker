@@ -134,8 +134,8 @@ export default function Auth() {
               <Briefcase className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold">Texas Job Search Tracker</h1>
-          <p className="text-muted-foreground mt-2">Track your job search activities</p>
+          <h1 className="text-3xl font-bold">Job Search Tracker</h1>
+          <p className="text-muted-foreground mt-2">Track your job search activities and stay organized</p>
         </div>
 
         <Card>
