@@ -130,11 +130,15 @@ export default function Auth() {
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
+      console.log('Attempting Google OAuth...');
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
       });
 
+      console.log('OAuth response:', { data, error });
+
       if (error) {
+        console.error('OAuth error:', error);
         toast({
           title: "Sign in failed",
           description: error.message,
@@ -142,6 +146,7 @@ export default function Auth() {
         });
       }
     } catch (error) {
+      console.error('Unexpected error:', error);
       toast({
         title: "Sign in failed",
         description: "An unexpected error occurred",
