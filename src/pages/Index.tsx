@@ -195,11 +195,11 @@ const Index = () => {
                 <ActivityDialog onSave={handleAddActivity} />
               </div>
               
-              {/* Import Options - Grid on mobile, flex on desktop */}
-              <div className="grid grid-cols-2 gap-2 lg:flex lg:gap-2">
+              {/* Import Options - Temporarily hidden until Gmail access is fixed */}
+              {/* <div className="grid grid-cols-2 gap-2 lg:flex lg:gap-2">
                 <GmailConnectButton />
                 <GmailImportDialog onImportComplete={loadActivitiesFromDb} />
-              </div>
+              </div> */}
               
               {/* More Actions - Grid on mobile, flex on desktop */}
               <div className="grid grid-cols-2 gap-2 lg:flex lg:gap-2">
