@@ -150,7 +150,7 @@ export function GmailConnectButton() {
         onClick={handleDisconnect}
         variant="outline"
         size="sm"
-        className="gap-2"
+        className="gap-2 text-foreground"
       >
         <Mail className="h-4 w-4" />
         Disconnect Gmail
@@ -163,7 +163,7 @@ export function GmailConnectButton() {
       onClick={handleConnectGmail}
       variant="outline"
       size="sm"
-      className="gap-2"
+      className="gap-2 text-foreground"
       disabled={isConnecting}
     >
       {isConnecting ? (

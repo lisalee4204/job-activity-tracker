@@ -82,7 +82,7 @@ export const GmailImportDialog = ({ onImportComplete }: { onImportComplete: () =
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" className="text-foreground">
           <Mail className="h-4 w-4 mr-2" />
           Import from Gmail
         </Button>

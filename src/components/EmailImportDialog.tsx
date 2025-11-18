@@ -78,7 +78,7 @@ export const EmailImportDialog = ({ onImport }: EmailImportDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" className="gap-2 text-foreground">
           <Mail className="h-4 w-4" />
           Import from Email
         </Button>
