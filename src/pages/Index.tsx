@@ -29,6 +29,7 @@ const Index = () => {
   const [activities, setActivities] = useState<JobSearchActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [weeklyGoal, setWeeklyGoal] = useState(3);
+  const [userEmail, setUserEmail] = useState<string>('');
 
   useEffect(() => {
     loadActivitiesFromDb();
@@ -68,6 +69,8 @@ const Index = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
+      setUserEmail(user.email || '');
 
       const { data, error } = await supabase
         .from('job_search_activities')
@@ -172,11 +175,16 @@ const Index = () => {
             {/* Title Section */}
             <div className="flex items-center gap-3">
               <Briefcase className="h-8 w-8" />
-              <div>
+              <div className="flex-1">
                 <h1 className="text-xl lg:text-2xl font-bold">Job Search Tracker</h1>
                 <p className="text-xs lg:text-sm opacity-90">
                   Track your job search activities and stay organized
                 </p>
+                {userEmail && (
+                  <p className="text-xs opacity-75 mt-1">
+                    Signed in as: {userEmail}
+                  </p>
+                )}
               </div>
             </div>
             
