@@ -30,10 +30,10 @@ export const GmailImportDialog = ({ onImportComplete }: { onImportComplete: () =
     try {
       setIsImporting(true);
 
-      // Get the access token from stored gmail tokens
+      // Get the access token and expiry from stored gmail tokens
       const { data: tokenData, error: tokenError } = await supabase
         .from('gmail_tokens')
-        .select('access_token')
+        .select('access_token, expires_at')
         .single();
 
       if (tokenError || !tokenData) {
@@ -43,6 +43,13 @@ export const GmailImportDialog = ({ onImportComplete }: { onImportComplete: () =
           variant: 'destructive',
         });
         return;
+      }
+
+      // Warn if token is expired — the backend will attempt a refresh, but if
+      // the refresh token is also invalid the user needs to reconnect.
+      const tokenExpired = new Date(tokenData.expires_at) <= new Date();
+      if (tokenExpired) {
+        console.warn('Stored Gmail access token is expired — backend will attempt refresh');
       }
 
       // Calculate date range
@@ -69,9 +76,13 @@ export const GmailImportDialog = ({ onImportComplete }: { onImportComplete: () =
       onImportComplete();
     } catch (error: any) {
       console.error('Import error:', error);
+      const isAuthError =
+        error?.message?.includes('401') || error?.message?.includes('verify user');
       toast({
         title: 'Import failed',
-        description: error.message || 'Failed to import emails',
+        description: isAuthError
+          ? 'Gmail session expired. Please disconnect and reconnect your Gmail account.'
+          : error.message || 'Failed to import emails',
         variant: 'destructive',
       });
     } finally {
