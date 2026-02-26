@@ -47,7 +47,7 @@ export const ExportMenu = ({ activities, weeklyGoal }: ExportMenuProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" className="gap-2 text-foreground bg-background hover:bg-accent">
           <Download className="h-4 w-4" />
           Export
         </Button>

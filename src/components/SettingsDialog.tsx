@@ -65,7 +65,7 @@ export const SettingsDialog = ({ weeklyGoal, onGoalChange }: SettingsDialogProps
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" className="text-foreground bg-background hover:bg-accent">
           <Settings className="h-4 w-4 mr-2" />
           Settings
         </Button>
