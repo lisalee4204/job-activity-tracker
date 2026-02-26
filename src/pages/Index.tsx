@@ -15,6 +15,7 @@ import { InsightsCard } from '@/components/InsightsCard';
 import { ExportMenu } from '@/components/ExportMenu';
 import { JobSearchActivity } from '@/types/jobSearch';
 import { GmailConnectButton } from '@/components/GmailConnectButton';
+import { DemoDataButton } from '@/components/DemoDataButton';
 import {
   getWeeklySummaries,
   getActivitiesByCategory,
@@ -207,8 +208,9 @@ const Index = () => {
                 <ExportMenu activities={activities} weeklyGoal={weeklyGoal} />
               </div>
               
-              {/* Settings & Logout - Grid on mobile, flex on desktop */}
-              <div className="grid grid-cols-2 gap-2 lg:flex lg:gap-2">
+              {/* Demo Data, Settings & Logout */}
+              <div className="grid grid-cols-3 gap-2 lg:flex lg:gap-2">
+                <DemoDataButton onComplete={loadActivitiesFromDb} hasActivities={activities.length > 0} />
                 <SettingsDialog weeklyGoal={weeklyGoal} onGoalChange={setWeeklyGoal} />
                 <Button 
                   variant="secondary" 
