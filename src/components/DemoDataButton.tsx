@@ -84,12 +84,12 @@ export const DemoDataButton = ({ onComplete, hasActivities }: DemoDataButtonProp
   };
 
   return demoLoaded ? (
-    <Button variant="outline" size="sm" onClick={clearDemoData} disabled={loading} className="gap-2 w-full lg:w-auto">
+    <Button variant="outline" size="sm" onClick={clearDemoData} disabled={loading} className="gap-2 w-full lg:w-auto text-foreground bg-background hover:bg-accent">
       <Trash2 className="h-4 w-4" />
       <span>{loading ? 'Clearing...' : 'Clear Demo Data'}</span>
     </Button>
   ) : (
-    <Button variant="outline" size="sm" onClick={loadDemoData} disabled={loading} className="gap-2 w-full lg:w-auto">
+    <Button variant="outline" size="sm" onClick={loadDemoData} disabled={loading} className="gap-2 w-full lg:w-auto text-foreground bg-background hover:bg-accent">
       <Database className="h-4 w-4" />
       <span>{loading ? 'Loading...' : 'Load Demo Data'}</span>
     </Button>
