@@ -101,12 +101,20 @@ export function GmailConnectButton() {
   const handleConnectGmail = async () => {
     setIsConnecting(true);
     try {
-      // Get OAuth config from backend
-      const { data, error } = await supabase.functions.invoke('gmail-oauth-config');
-      
-      if (error) throw error;
+      // Use the client ID from the environment variable when available,
+      // falling back to the backend config endpoint.
+      let clientId = import.meta.env.VITE_GMAIL_CLIENT_ID as string | undefined;
+      let scope = 'https://www.googleapis.com/auth/gmail.readonly';
 
-      const { clientId, scope } = data;
+      if (!clientId) {
+        const { data, error } = await supabase.functions.invoke('gmail-oauth-config');
+        if (error) throw error;
+        clientId = data.clientId;
+        scope = data.scope;
+      }
+
+      if (!clientId) throw new Error('Gmail client ID not configured');
+
       const redirectUri = `${window.location.origin}${window.location.pathname}`;
 
       // Build OAuth URL
