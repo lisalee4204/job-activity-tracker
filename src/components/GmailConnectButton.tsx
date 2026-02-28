@@ -44,8 +44,8 @@ export function GmailConnectButton() {
     if (code) {
       setIsConnecting(true);
       try {
-        const redirectUri = `${window.location.origin}${window.location.pathname}`;
-        
+        const redirectUri = `${window.location.origin}${window.location.pathname}`.replace(/\/+$/, '');
+
         // Exchange code for tokens
         const { data: tokenData, error: tokenError } = await supabase.functions.invoke('gmail-auth', {
           body: { code, redirectUri }
@@ -115,7 +115,7 @@ export function GmailConnectButton() {
 
       if (!clientId) throw new Error('Gmail client ID not configured');
 
-      const redirectUri = `${window.location.origin}${window.location.pathname}`;
+      const redirectUri = `${window.location.origin}${window.location.pathname}`.replace(/\/+$/, '');
 
       // Build OAuth URL
       const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
