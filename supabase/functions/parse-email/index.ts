@@ -1,9 +1,8 @@
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders } from '../_shared/cors.ts';
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -19,7 +18,7 @@ Deno.serve(async (req) => {
     }
 
     // Security: Limit email content size to 50KB to prevent DoS and credit exhaustion
-    const MAX_EMAIL_SIZE = 50 * 1024; // 50KB
+    const MAX_EMAIL_SIZE = 50 * 1024;
     if (emailContent.length > MAX_EMAIL_SIZE) {
       return new Response(
         JSON.stringify({ error: `Email content too large. Maximum size is ${MAX_EMAIL_SIZE / 1024}KB` }),
@@ -61,22 +60,10 @@ Deno.serve(async (req) => {
               parameters: {
                 type: 'object',
                 properties: {
-                  companyName: {
-                    type: 'string',
-                    description: 'The name of the company'
-                  },
-                  jobTitle: {
-                    type: 'string',
-                    description: 'The job title or position applied for'
-                  },
-                  date: {
-                    type: 'string',
-                    description: 'The application date in YYYY-MM-DD format'
-                  },
-                  jobDescriptionUrl: {
-                    type: 'string',
-                    description: 'URL to the job posting if mentioned in the email'
-                  }
+                  companyName: { type: 'string', description: 'The name of the company' },
+                  jobTitle: { type: 'string', description: 'The job title or position applied for' },
+                  date: { type: 'string', description: 'The application date in YYYY-MM-DD format' },
+                  jobDescriptionUrl: { type: 'string', description: 'URL to the job posting if mentioned in the email' }
                 },
                 required: ['companyName', 'jobTitle', 'date'],
                 additionalProperties: false
@@ -112,7 +99,6 @@ Deno.serve(async (req) => {
     const data = await response.json();
     console.log('AI Response:', JSON.stringify(data, null, 2));
 
-    // Extract the function call arguments
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall?.function?.arguments) {
       return new Response(
@@ -125,14 +111,8 @@ Deno.serve(async (req) => {
     console.log('Extracted job details:', parsedData);
 
     return new Response(
-      JSON.stringify({ 
-        success: true,
-        data: parsedData 
-      }),
-      { 
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      JSON.stringify({ success: true, data: parsedData }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
@@ -140,10 +120,7 @@ Deno.serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : 'Failed to parse email';
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

@@ -1,7 +1,4 @@
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders } from '../_shared/cors.ts';
 
 interface GmailMessage {
   id: string;
@@ -18,6 +15,8 @@ interface GmailMessage {
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -34,7 +33,6 @@ Deno.serve(async (req) => {
 
     console.log('Fetching emails from Gmail...');
 
-    // Fetch recent emails with job application keywords (last 7 days)
     const keywords = [
       'thank you for applying',
       'thanks for applying',
@@ -72,7 +70,6 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    // Get user from authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('No authorization header');
@@ -80,7 +77,6 @@ Deno.serve(async (req) => {
 
     const token = authHeader.replace('Bearer ', '');
     
-    // Verify user with Supabase auth
     const userResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -94,7 +90,6 @@ Deno.serve(async (req) => {
 
     const user = await userResponse.json();
 
-    // Fetch and parse each email
     for (const msg of messageIds.slice(0, 10)) {
       try {
         const messageResponse = await fetch(
@@ -111,7 +106,6 @@ Deno.serve(async (req) => {
 
         const message: GmailMessage = await messageResponse.json();
         
-        // Extract email body
         let emailBody = message.snippet || '';
         
         if (message.payload?.parts) {
@@ -125,7 +119,6 @@ Deno.serve(async (req) => {
           emailBody = atob(message.payload.body.data.replace(/-/g, '+').replace(/_/g, '/'));
         }
 
-        // Parse email with AI
         const parseResponse = await fetch(
           `${supabaseUrl}/functions/v1/parse-email`,
           {
@@ -146,7 +139,6 @@ Deno.serve(async (req) => {
         const parseResult = await parseResponse.json();
         
         if (parseResult.success && parseResult.data) {
-          // Save to database using REST API
           const insertResponse = await fetch(
             `${supabaseUrl}/rest/v1/job_search_activities`,
             {
