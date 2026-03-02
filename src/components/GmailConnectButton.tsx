@@ -70,7 +70,7 @@ export function GmailConnectButton() {
             access_token: tokenData.accessToken,
             refresh_token: tokenData.refreshToken,
             expires_at: expiresAt,
-          });
+          }, { onConflict: 'user_id' });
 
         if (storeError) throw storeError;
 
