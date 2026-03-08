@@ -14,6 +14,54 @@ interface GmailMessage {
   };
 }
 
+async function refreshAccessToken(
+  supabaseUrl: string,
+  supabaseServiceKey: string,
+  userId: string,
+  refreshToken: string
+): Promise<string> {
+  const clientId = Deno.env.get('GMAIL_CLIENT_ID');
+  const clientSecret = Deno.env.get('GMAIL_CLIENT_SECRET');
+
+  if (!clientId || !clientSecret) {
+    throw new Error('Gmail credentials not configured — cannot refresh token');
+  }
+
+  const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+      grant_type: 'refresh_token',
+    }),
+  });
+
+  if (!tokenResponse.ok) {
+    const errorText = await tokenResponse.text();
+    console.error('Token refresh failed:', errorText);
+    throw new Error('Gmail token expired — please reconnect your Gmail account');
+  }
+
+  const tokens = await tokenResponse.json();
+  const newAccessToken: string = tokens.access_token;
+  const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
+
+  // Persist new access token to DB
+  await fetch(`${supabaseUrl}/rest/v1/gmail_tokens?user_id=eq.${userId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${supabaseServiceKey}`,
+      'apikey': supabaseServiceKey,
+    },
+    body: JSON.stringify({ access_token: newAccessToken, expires_at: expiresAt }),
+  });
+
+  return newAccessToken;
+}
+
 Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
 
@@ -22,14 +70,37 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { accessToken, daysAgo = 7 } = await req.json();
+    const { accessToken: initialAccessToken, daysAgo = 7 } = await req.json();
 
-    if (!accessToken) {
+    if (!initialAccessToken) {
       return new Response(
         JSON.stringify({ error: 'Access token is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+
+    const userResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'apikey': supabaseServiceKey,
+      },
+    });
+
+    if (!userResponse.ok) {
+      throw new Error('Failed to verify user');
+    }
+
+    const user = await userResponse.json();
 
     console.log('Fetching emails from Gmail...');
 
@@ -42,10 +113,13 @@ Deno.serve(async (req) => {
       'confirm your application',
       'application confirmation'
     ];
-    
+
     const keywordQuery = keywords.map(k => `"${k}"`).join(' OR ');
     const query = encodeURIComponent(`newer_than:${daysAgo}d (${keywordQuery})`);
-    const messagesResponse = await fetch(
+
+    // Attempt Gmail search, refresh token on 401
+    let accessToken = initialAccessToken;
+    let messagesResponse = await fetch(
       `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${query}&maxResults=50`,
       {
         headers: {
@@ -54,6 +128,44 @@ Deno.serve(async (req) => {
         },
       }
     );
+
+    if (messagesResponse.status === 401) {
+      console.log('Access token expired, attempting refresh...');
+
+      // Fetch refresh token from DB
+      const tokenRow = await fetch(
+        `${supabaseUrl}/rest/v1/gmail_tokens?user_id=eq.${user.id}&select=refresh_token`,
+        {
+          headers: {
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+            'apikey': supabaseServiceKey,
+          },
+        }
+      );
+
+      if (!tokenRow.ok) {
+        throw new Error('Gmail token expired — please reconnect your Gmail account');
+      }
+
+      const tokenData = await tokenRow.json();
+      const refreshToken = tokenData?.[0]?.refresh_token;
+      if (!refreshToken) {
+        throw new Error('No refresh token available — please reconnect your Gmail account');
+      }
+
+      accessToken = await refreshAccessToken(supabaseUrl, supabaseServiceKey, user.id, refreshToken);
+
+      // Retry with new token
+      messagesResponse = await fetch(
+        `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${query}&maxResults=50`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    }
 
     if (!messagesResponse.ok) {
       const errorText = await messagesResponse.text();
@@ -67,28 +179,6 @@ Deno.serve(async (req) => {
     console.log(`Found ${messageIds.length} messages`);
 
     const parsedActivities = [];
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    
-    const userResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'apikey': supabaseServiceKey,
-      },
-    });
-
-    if (!userResponse.ok) {
-      throw new Error('Failed to verify user');
-    }
-
-    const user = await userResponse.json();
 
     for (const msg of messageIds.slice(0, 10)) {
       try {
@@ -105,11 +195,11 @@ Deno.serve(async (req) => {
         if (!messageResponse.ok) continue;
 
         const message: GmailMessage = await messageResponse.json();
-        
+
         let emailBody = message.snippet || '';
-        
+
         if (message.payload?.parts) {
-          const textPart = message.payload.parts.find(part => 
+          const textPart = message.payload.parts.find(part =>
             part.mimeType === 'text/plain' || part.mimeType === 'text/html'
           );
           if (textPart?.body?.data) {
@@ -137,7 +227,7 @@ Deno.serve(async (req) => {
         }
 
         const parseResult = await parseResponse.json();
-        
+
         if (parseResult.success && parseResult.data) {
           const insertResponse = await fetch(
             `${supabaseUrl}/rest/v1/job_search_activities`,
@@ -172,7 +262,7 @@ Deno.serve(async (req) => {
     console.log(`Successfully parsed ${parsedActivities.length} activities`);
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
         count: parsedActivities.length,
         activities: parsedActivities,
