@@ -13,6 +13,7 @@ interface GmailMessage {
   id: string;
   threadId: string;
   snippet: string;
+  internalDate?: string;
   payload?: {
     mimeType?: string;
     headers: Array<{ name: string; value: string }>;
@@ -244,6 +245,22 @@ Deno.serve(async (req) => {
 
         const message: GmailMessage = await messageResponse.json();
 
+        // Get reliable date from Gmail headers or internalDate
+        const dateHeader = message.payload?.headers?.find(
+          (h) => h.name.toLowerCase() === 'date'
+        )?.value;
+        let emailDate: string;
+        if (dateHeader) {
+          const parsed = new Date(dateHeader);
+          emailDate = isNaN(parsed.getTime())
+            ? new Date(Number(message.internalDate)).toISOString().split('T')[0]
+            : parsed.toISOString().split('T')[0];
+        } else if (message.internalDate) {
+          emailDate = new Date(Number(message.internalDate)).toISOString().split('T')[0];
+        } else {
+          emailDate = new Date().toISOString().split('T')[0];
+        }
+
         // Extract email body with full recursive MIME traversal
         let emailBody = '';
 
@@ -269,7 +286,7 @@ Deno.serve(async (req) => {
               'Authorization': authHeader,
               'apikey': supabaseAnonKey,
             },
-            body: JSON.stringify({ emailContent: emailBody }),
+            body: JSON.stringify({ emailContent: emailBody, emailDate }),
           }
         );
 
@@ -281,6 +298,9 @@ Deno.serve(async (req) => {
         const parseResult = await parseResponse.json();
 
         if (parseResult.success && parseResult.data) {
+          // Always use the Gmail header date — it's the actual received date
+          parseResult.data.date = emailDate;
+
           // Save to database using REST API
           const insertResponse = await fetch(
             `${supabaseUrl}/rest/v1/job_search_activities`,
@@ -294,7 +314,7 @@ Deno.serve(async (req) => {
               },
               body: JSON.stringify({
                 user_id: user.id,
-                date: parseResult.data.date,
+                date: emailDate,
                 company_name: parseResult.data.companyName,
                 job_title: parseResult.data.jobTitle,
                 activity_type: 'application',

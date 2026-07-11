@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { emailContent } = await req.json();
+    const { emailContent, emailDate } = await req.json();
 
     if (!emailContent) {
       return new Response(
@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant that extracts job application information from emails. Extract company name, job title, application date, and job description URL if present.'
+            content: `You are a helpful assistant that extracts job application information from emails. Extract company name, job title, and job description URL if present. The email was received on ${emailDate || 'an unknown date'} — use that as the application date.`
           },
           {
             role: 'user',
