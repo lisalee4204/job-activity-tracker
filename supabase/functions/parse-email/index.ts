@@ -8,8 +8,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { emailContent } = await req.json();
-    
+    const { emailContent, emailDate } = await req.json();
+
     if (!emailContent) {
       return new Response(
         JSON.stringify({ error: 'Email content is required' }),
@@ -17,7 +17,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Security: Limit email content size to 50KB to prevent DoS and credit exhaustion
     const MAX_EMAIL_SIZE = 50 * 1024;
     if (emailContent.length > MAX_EMAIL_SIZE) {
       return new Response(
@@ -44,7 +43,7 @@ Deno.serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant that extracts job application information from emails. Extract company name, job title, application date, and job description URL if present.'
+            content: `You are a helpful assistant that extracts job application information from emails. Extract company name, job title, and job description URL if present. The email was received on ${emailDate || 'an unknown date'} — use that as the application date.`
           },
           {
             role: 'user',
@@ -78,21 +77,21 @@ Deno.serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('AI API error:', response.status, errorText);
-      
+
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      
+
       if (response.status === 402) {
         return new Response(
           JSON.stringify({ error: 'AI credits exhausted. Please add credits to continue.' }),
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      
+
       throw new Error(`AI API returned ${response.status}`);
     }
 

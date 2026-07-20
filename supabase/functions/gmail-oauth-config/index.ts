@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
     const clientId = Deno.env.get('GMAIL_CLIENT_ID');
 
     if (!clientId) {
-      throw new Error('Gmail client ID not configured');
+      throw new Error('Gmail client ID not configured. Set the GMAIL_CLIENT_ID Supabase secret.');
     }
 
     return new Response(
