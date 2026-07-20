@@ -1,5 +1,9 @@
 import { getCorsHeaders } from '../_shared/cors.ts';
 
+function sanitizeGoogleClientId(clientId: string | undefined): string | undefined {
+  return clientId?.trim().replace(/\/+$/, '');
+}
+
 Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
 
@@ -8,7 +12,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const clientId = Deno.env.get('GMAIL_CLIENT_ID');
+    const clientId = sanitizeGoogleClientId(Deno.env.get('GMAIL_CLIENT_ID'));
 
     if (!clientId) {
       throw new Error('Gmail client ID not configured. Set the GMAIL_CLIENT_ID Supabase secret.');
