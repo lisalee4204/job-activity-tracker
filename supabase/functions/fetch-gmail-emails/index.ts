@@ -1,4 +1,5 @@
 import { getCorsHeaders } from '../_shared/cors.ts';
+import { encryptToken, decryptToken } from '../_shared/tokenCrypto.ts';
 
 interface MessagePart {
   mimeType: string;
@@ -147,12 +148,12 @@ async function refreshGmailToken(
   }
 
   const updateBody: Record<string, string> = {
-    access_token: newAccessToken,
+    access_token: await encryptToken(newAccessToken),
     expires_at: expiresAt,
   };
 
   if (tokens.refresh_token) {
-    updateBody.refresh_token = tokens.refresh_token;
+    updateBody.refresh_token = await encryptToken(tokens.refresh_token);
   }
 
   const updateRes = await fetch(
