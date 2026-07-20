@@ -40,6 +40,7 @@ interface DemoDataButtonProps {
 export const DemoDataButton = ({ onComplete, hasActivities }: DemoDataButtonProps) => {
   const [loading, setLoading] = useState(false);
   const [demoLoaded, setDemoLoaded] = useState(false);
+  const [demoIds, setDemoIds] = useState<string[]>([]);
 
   const loadDemoData = async () => {
     setLoading(true);
@@ -48,9 +49,10 @@ export const DemoDataButton = ({ onComplete, hasActivities }: DemoDataButtonProp
       if (!user) { toast.error('You must be logged in'); return; }
 
       const rows = demoActivities.map(a => ({ ...a, user_id: user.id }));
-      const { error } = await supabase.from('job_search_activities').insert(rows);
+      const { data, error } = await supabase.from('job_search_activities').insert(rows).select('id');
       if (error) throw error;
 
+      setDemoIds((data || []).map(r => r.id));
       setDemoLoaded(true);
       toast.success('25 demo activities loaded!');
       onComplete();
@@ -65,13 +67,13 @@ export const DemoDataButton = ({ onComplete, hasActivities }: DemoDataButtonProp
   const clearDemoData = async () => {
     setLoading(true);
     try {
-      const companies = demoActivities.map(a => a.company_name);
       const { error } = await supabase
         .from('job_search_activities')
         .delete()
-        .in('company_name', companies);
+        .in('id', demoIds);
       if (error) throw error;
 
+      setDemoIds([]);
       setDemoLoaded(false);
       toast.success('Demo data cleared!');
       onComplete();

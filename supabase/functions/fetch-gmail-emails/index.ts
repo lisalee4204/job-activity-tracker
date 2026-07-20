@@ -1,7 +1,4 @@
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders } from '../_shared/cors.ts';
 
 interface MessagePart {
   mimeType: string;
@@ -26,16 +23,13 @@ function decodeBase64Url(data: string): string {
   return atob(data.replace(/-/g, '+').replace(/_/g, '/'));
 }
 
-// Recursively extract email body, preferring text/plain over text/html
 function extractEmailBody(parts: MessagePart[]): string {
-  // First pass: look for text/plain at this level
   for (const part of parts) {
     if (part.mimeType === 'text/plain' && part.body?.data) {
       return decodeBase64Url(part.body.data);
     }
   }
 
-  // Second pass: recurse into multipart/* sub-parts
   for (const part of parts) {
     if (part.mimeType?.startsWith('multipart/') && part.parts?.length) {
       const nested = extractEmailBody(part.parts);
@@ -43,7 +37,6 @@ function extractEmailBody(parts: MessagePart[]): string {
     }
   }
 
-  // Third pass: fall back to text/html at this level
   for (const part of parts) {
     if (part.mimeType === 'text/html' && part.body?.data) {
       return decodeBase64Url(part.body.data);
@@ -66,7 +59,6 @@ async function refreshGmailToken(
     return null;
   }
 
-  // Look up refresh token from DB
   const tokenRes = await fetch(
     `${supabaseUrl}/rest/v1/gmail_tokens?user_id=eq.${userId}&select=refresh_token`,
     {
@@ -108,7 +100,6 @@ async function refreshGmailToken(
   const newAccessToken = tokens.access_token;
   const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
-  // Update stored access token
   await fetch(
     `${supabaseUrl}/rest/v1/gmail_tokens?user_id=eq.${userId}`,
     {
@@ -127,6 +118,8 @@ async function refreshGmailToken(
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -138,7 +131,6 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || supabaseServiceKey;
 
-    // Verify user FIRST so we have the user ID available for token refresh
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('No authorization header');
@@ -183,7 +175,6 @@ Deno.serve(async (req) => {
     const keywordQuery = keywords.map(k => `"${k}"`).join(' OR ');
     const query = encodeURIComponent(`newer_than:${daysAgo}d (${keywordQuery})`);
 
-    // Fetch message list, refreshing the token on 401
     let effectiveToken = accessToken;
     let messagesResponse = await fetch(
       `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${query}&maxResults=50`,
@@ -225,7 +216,6 @@ Deno.serve(async (req) => {
 
     const parsedActivities = [];
 
-    // Fetch and parse each email (up to 10)
     for (const msg of messageIds.slice(0, 10)) {
       try {
         const messageResponse = await fetch(
@@ -245,7 +235,6 @@ Deno.serve(async (req) => {
 
         const message: GmailMessage = await messageResponse.json();
 
-        // Get reliable date from Gmail headers or internalDate
         const dateHeader = message.payload?.headers?.find(
           (h) => h.name.toLowerCase() === 'date'
         )?.value;
@@ -261,7 +250,6 @@ Deno.serve(async (req) => {
           emailDate = new Date().toISOString().split('T')[0];
         }
 
-        // Extract email body with full recursive MIME traversal
         let emailBody = '';
 
         if (message.payload?.parts?.length) {
@@ -270,13 +258,11 @@ Deno.serve(async (req) => {
           emailBody = decodeBase64Url(message.payload.body.data);
         }
 
-        // Fall back to snippet only if body extraction completely failed
         if (!emailBody) {
           emailBody = message.snippet || '';
           console.warn(`Message ${msg.id}: falling back to snippet (no body extracted)`);
         }
 
-        // Parse email with AI — include apikey header required by Kong gateway
         const parseResponse = await fetch(
           `${supabaseUrl}/functions/v1/parse-email`,
           {
@@ -298,10 +284,8 @@ Deno.serve(async (req) => {
         const parseResult = await parseResponse.json();
 
         if (parseResult.success && parseResult.data) {
-          // Always use the Gmail header date — it's the actual received date
           parseResult.data.date = emailDate;
 
-          // Save to database using REST API
           const insertResponse = await fetch(
             `${supabaseUrl}/rest/v1/job_search_activities`,
             {
