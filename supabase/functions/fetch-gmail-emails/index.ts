@@ -349,7 +349,7 @@ Deno.serve(async (req) => {
         supabaseUrl,
         supabaseServiceKey,
         user.id,
-        storedToken.refresh_token
+        decryptedRefreshToken
       );
 
       if (!refreshResult.ok) {
