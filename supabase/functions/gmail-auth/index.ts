@@ -1,4 +1,5 @@
 import { getCorsHeaders } from '../_shared/cors.ts';
+import { encryptToken } from '../_shared/tokenCrypto.ts';
 
 function sanitizeGoogleClientId(clientId: string | undefined): string | undefined {
   return clientId?.trim().replace(/\/+$/, '');
@@ -85,12 +86,12 @@ Deno.serve(async (req) => {
     const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
     const tokenRecord: Record<string, string> = {
       user_id: user.id,
-      access_token: tokens.access_token,
+      access_token: await encryptToken(tokens.access_token),
       expires_at: expiresAt,
     };
 
     if (tokens.refresh_token) {
-      tokenRecord.refresh_token = tokens.refresh_token;
+      tokenRecord.refresh_token = await encryptToken(tokens.refresh_token);
     }
 
     const storeResponse = await fetch(`${supabaseUrl}/rest/v1/gmail_tokens?on_conflict=user_id`, {

@@ -1,4 +1,5 @@
 import { getCorsHeaders } from '../_shared/cors.ts';
+import { encryptToken, decryptToken } from '../_shared/tokenCrypto.ts';
 
 interface MessagePart {
   mimeType: string;
@@ -147,12 +148,12 @@ async function refreshGmailToken(
   }
 
   const updateBody: Record<string, string> = {
-    access_token: newAccessToken,
+    access_token: await encryptToken(newAccessToken),
     expires_at: expiresAt,
   };
 
   if (tokens.refresh_token) {
-    updateBody.refresh_token = tokens.refresh_token;
+    updateBody.refresh_token = await encryptToken(tokens.refresh_token);
   }
 
   const updateRes = await fetch(
@@ -276,6 +277,24 @@ Deno.serve(async (req) => {
       );
     }
 
+    let decryptedAccessToken: string | null;
+    let decryptedRefreshToken: string | null;
+    try {
+      decryptedAccessToken = await decryptToken(storedToken.access_token);
+      decryptedRefreshToken = await decryptToken(storedToken.refresh_token);
+    } catch (err) {
+      console.error('Failed to decrypt stored Gmail tokens:', err);
+      return jsonResponse(
+        {
+          error: 'Gmail connection is corrupted. Please reconnect Gmail.',
+          code: 'GMAIL_REAUTH_REQUIRED',
+          reauthRequired: true,
+        },
+        401,
+        corsHeaders
+      );
+    }
+
     console.log('Fetching emails from Gmail...');
 
     const keywords = [
@@ -294,7 +313,7 @@ Deno.serve(async (req) => {
     const keywordQuery = keywords.map(k => `"${k}"`).join(' OR ');
     const query = encodeURIComponent(`newer_than:${daysAgo}d (${keywordQuery})`);
 
-    let effectiveToken = storedToken.access_token;
+    let effectiveToken = decryptedAccessToken!;
 
     if (new Date(storedToken.expires_at).getTime() <= Date.now() + 60_000) {
       console.log('Stored access token expired, attempting refresh before Gmail request...');
@@ -302,7 +321,7 @@ Deno.serve(async (req) => {
         supabaseUrl,
         supabaseServiceKey,
         user.id,
-        storedToken.refresh_token
+        decryptedRefreshToken
       );
 
       if (!refreshResult.ok) {
@@ -330,7 +349,7 @@ Deno.serve(async (req) => {
         supabaseUrl,
         supabaseServiceKey,
         user.id,
-        storedToken.refresh_token
+        decryptedRefreshToken
       );
 
       if (!refreshResult.ok) {
