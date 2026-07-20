@@ -30,10 +30,10 @@ export const GmailImportDialog = ({ onImportComplete }: { onImportComplete: () =
     try {
       setIsImporting(true);
 
-      // Get the access token and expiry from stored gmail tokens
+      // Confirm Gmail is connected. The backend reads and refreshes tokens securely.
       const { data: tokenData, error: tokenError } = await supabase
         .from('gmail_tokens')
-        .select('access_token, expires_at')
+        .select('id, expires_at')
         .single();
 
       if (tokenError || !tokenData) {
@@ -62,7 +62,7 @@ export const GmailImportDialog = ({ onImportComplete }: { onImportComplete: () =
       }
 
       const { data, error } = await supabase.functions.invoke('fetch-gmail-emails', {
-        body: { accessToken: tokenData.access_token, daysAgo },
+        body: { daysAgo },
       });
 
       if (error) throw error;
@@ -76,13 +76,30 @@ export const GmailImportDialog = ({ onImportComplete }: { onImportComplete: () =
       onImportComplete();
     } catch (error: any) {
       console.error('Import error:', error);
+      let errorMessage = error?.message || 'Failed to import emails';
+      let errorCode = '';
+
+      if (error?.context) {
+        const details = await error.context.text();
+        try {
+          const parsed = JSON.parse(details);
+          errorMessage = parsed.error || errorMessage;
+          errorCode = parsed.code || '';
+        } catch {
+          errorMessage = details || errorMessage;
+        }
+      }
+
       const isAuthError =
-        error?.message?.includes('401') || error?.message?.includes('verify user');
+        errorCode === 'GMAIL_REAUTH_REQUIRED' ||
+        errorMessage.includes('401') ||
+        errorMessage.includes('verify user') ||
+        errorMessage.toLowerCase().includes('reconnect gmail');
       toast({
         title: 'Import failed',
         description: isAuthError
           ? 'Gmail session expired. Please disconnect and reconnect your Gmail account.'
-          : error.message || 'Failed to import emails',
+          : errorMessage,
         variant: 'destructive',
       });
     } finally {

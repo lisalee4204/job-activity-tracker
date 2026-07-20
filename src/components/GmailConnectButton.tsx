@@ -57,27 +57,10 @@ export function GmailConnectButton() {
           throw new Error(tokenData.error || 'Failed to authenticate');
         }
 
-        // Store tokens in database
-        const { data: session } = await supabase.auth.getSession();
-        if (!session.session) throw new Error('Not authenticated');
-
-        const expiresAt = new Date(Date.now() + tokenData.expiresIn * 1000).toISOString();
-
-        const { error: storeError } = await supabase
-          .from('gmail_tokens')
-          .upsert({
-            user_id: session.session.user.id,
-            access_token: tokenData.accessToken,
-            refresh_token: tokenData.refreshToken,
-            expires_at: expiresAt,
-          }, { onConflict: 'user_id' });
-
-        if (storeError) throw storeError;
-
         // Fetch emails
         toast.info('Fetching emails from Gmail...');
         const { data: emailData, error: emailError } = await supabase.functions.invoke('fetch-gmail-emails', {
-          body: { accessToken: tokenData.accessToken }
+          body: {}
         });
 
         if (emailError) throw emailError;
@@ -101,17 +84,11 @@ export function GmailConnectButton() {
   const handleConnectGmail = async () => {
     setIsConnecting(true);
     try {
-      // Use the client ID from the environment variable when available,
-      // falling back to the backend config endpoint.
-      let clientId = import.meta.env.VITE_GMAIL_CLIENT_ID as string | undefined;
-      let scope = 'https://www.googleapis.com/auth/gmail.readonly';
+      const { data, error } = await supabase.functions.invoke('gmail-oauth-config');
+      if (error) throw error;
 
-      if (!clientId) {
-        const { data, error } = await supabase.functions.invoke('gmail-oauth-config');
-        if (error) throw error;
-        clientId = data.clientId;
-        scope = data.scope;
-      }
+      const clientId = data.clientId?.trim().replace(/\/+$/, '');
+      const scope = data.scope || 'https://www.googleapis.com/auth/gmail.readonly';
 
       if (!clientId) throw new Error('Gmail client ID not configured');
 
