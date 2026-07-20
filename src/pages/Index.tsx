@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ActivityDialog } from '@/components/ActivityDialog';
 import { EmailImportDialog } from '@/components/EmailImportDialog';
 import { GmailImportDialog } from '@/components/GmailImportDialog';
@@ -22,8 +23,9 @@ import {
   getJobTitleCounts,
 } from '@/lib/weekUtils';
 import { toast } from 'sonner';
-import { Briefcase, FileText, TrendingUp, LogOut } from 'lucide-react';
+import { Briefcase, FileText, TrendingUp, LogOut, Filter } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { subDays, subMonths, parseISO, startOfMonth } from 'date-fns';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -31,6 +33,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [weeklyGoal, setWeeklyGoal] = useState(3);
   const [userEmail, setUserEmail] = useState<string>('');
+  const [timeFilter, setTimeFilter] = useState<string>('30d');
 
   useEffect(() => {
     loadActivitiesFromDb();
@@ -164,9 +167,25 @@ const Index = () => {
     }
   };
 
-  const weeklySummaries = getWeeklySummaries(activities, weeklyGoal);
-  const categoryCounts = getActivitiesByCategory(activities);
-  const jobTitleCounts = getJobTitleCounts(activities);
+  const filteredActivities = useMemo(() => {
+    if (timeFilter === 'all') return activities;
+    const now = new Date();
+    let cutoff: Date;
+    switch (timeFilter) {
+      case '7d': cutoff = subDays(now, 7); break;
+      case '14d': cutoff = subDays(now, 14); break;
+      case '30d': cutoff = subDays(now, 30); break;
+      case '3m': cutoff = subMonths(now, 3); break;
+      case '6m': cutoff = subMonths(now, 6); break;
+      case 'this_month': cutoff = startOfMonth(now); break;
+      default: cutoff = subDays(now, 30);
+    }
+    return activities.filter(a => parseISO(a.date) >= cutoff);
+  }, [activities, timeFilter]);
+
+  const weeklySummaries = getWeeklySummaries(filteredActivities, weeklyGoal);
+  const categoryCounts = getActivitiesByCategory(filteredActivities);
+  const jobTitleCounts = getJobTitleCounts(filteredActivities);
 
   return (
     <div className="min-h-screen bg-background">
@@ -205,7 +224,7 @@ const Index = () => {
               {/* More Actions - Grid on mobile, flex on desktop */}
               <div className="grid grid-cols-2 gap-2 lg:flex lg:gap-2">
                 <EmailImportDialog onImport={handleAddActivity} />
-                <ExportMenu activities={activities} weeklyGoal={weeklyGoal} />
+                <ExportMenu activities={filteredActivities} weeklyGoal={weeklyGoal} />
               </div>
               
               {/* Demo Data, Settings & Logout */}
@@ -234,6 +253,28 @@ const Index = () => {
           </div>
         ) : (
           <>
+        {/* Time Filter */}
+        <div className="flex items-center gap-3 mb-6">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Select value={timeFilter} onValueChange={setTimeFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Time period" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7d">Last 7 days</SelectItem>
+              <SelectItem value="14d">Last 14 days</SelectItem>
+              <SelectItem value="this_month">This month</SelectItem>
+              <SelectItem value="30d">Last 30 days</SelectItem>
+              <SelectItem value="3m">Last 3 months</SelectItem>
+              <SelectItem value="6m">Last 6 months</SelectItem>
+              <SelectItem value="all">All time</SelectItem>
+            </SelectContent>
+          </Select>
+          <span className="text-sm text-muted-foreground">
+            {filteredActivities.length} activit{filteredActivities.length === 1 ? 'y' : 'ies'}
+          </span>
+        </div>
+
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
@@ -242,9 +283,9 @@ const Index = () => {
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{activities.length}</div>
+              <div className="text-3xl font-bold">{filteredActivities.length}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                All time job search activities
+                {timeFilter === 'all' ? 'All time' : 'In selected period'}
               </p>
             </CardContent>
           </Card>
@@ -286,7 +327,7 @@ const Index = () => {
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Weekly Summary</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {weeklySummaries.slice(0, 6).map((summary) => (
+            {weeklySummaries.map((summary) => (
               <WeeklySummaryCard key={summary.weekStart} summary={summary} weeklyGoal={weeklyGoal} />
             ))}
           </div>
@@ -309,19 +350,19 @@ const Index = () => {
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Analytics & Insights</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <AnalyticsDashboard activities={activities} />
-            <InsightsCard activities={activities} />
+            <AnalyticsDashboard activities={filteredActivities} />
+            <InsightsCard activities={filteredActivities} />
           </div>
         </section>
 
         {/* Activities Table */}
         <section>
-          <h2 className="text-xl font-semibold mb-4">Recent Activities</h2>
+          <h2 className="text-xl font-semibold mb-4">Activities</h2>
           <Card>
             <CardContent className="p-0">
-              <ActivityTable 
-                activities={activities.slice(0, 20)} 
-                onDelete={handleDeleteActivity} 
+              <ActivityTable
+                activities={filteredActivities}
+                onDelete={handleDeleteActivity}
               />
             </CardContent>
           </Card>

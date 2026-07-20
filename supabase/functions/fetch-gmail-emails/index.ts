@@ -311,7 +311,7 @@ Deno.serve(async (req) => {
     ];
 
     const keywordQuery = keywords.map(k => `"${k}"`).join(' OR ');
-    const query = encodeURIComponent(`newer_than:${daysAgo}d (${keywordQuery})`);
+    const query = encodeURIComponent(`newer_than:${daysAgo}d (label:job-apps OR ${keywordQuery})`);
 
     let effectiveToken = decryptedAccessToken!;
 
